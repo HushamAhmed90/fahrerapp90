@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="de" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Dirk Schröder — Arbeitszeit</title>
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7B1D34">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ArbeitZeit">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FDF4EE;
+    --surface:#FFFFFF;
+    --surface-2:#F8E8DF;
+    --accent:#7B1D34;
+    --accent-ink:#FDF4EE;
+    --gold:#B8863F;
+    --good:#4F8F6D;
+    --bad:#A83246;
+    --text:#2E1A1D;
+    --text-muted:#9A7E72;
+    --border:#EEDDD1;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,Arial,sans-serif;
+    font-variant-numeric:tabular-nums;}
+  h1, h2, .logo-title{font-family:"Playfair Display",Georgia,"Times New Roman",serif;}
+  #app{max-width:460px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column;
+    background:var(--bg); position:relative;}
+  .screen{padding:28px 22px 40px; flex:1; display:flex; flex-direction:column; animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+  .brandline{font-size:13px; color:var(--text-muted); letter-spacing:.02em; margin-bottom:2px;}
+  h1{font-size:26px; font-weight:700; margin:0 0 4px; line-height:1.25;}
+  h2{font-size:19px; font-weight:700; margin:0 0 14px;}
+  p.sub{color:var(--text-muted); font-size:14.5px; margin:0 0 22px; line-height:1.6;}
+  .spacer{flex:1;}
+
+  .btn{display:block; width:100%; border:none; border-radius:14px; padding:16px 18px;
+    font-size:16px; font-weight:600; cursor:pointer; text-align:center; font-family:inherit;}
+  .btn-accent{background:var(--accent); color:var(--accent-ink);}
+  .btn-outline{background:transparent; color:var(--text); border:1px solid var(--border);}
+  .btn-danger{background:transparent; color:var(--bad); border:1px solid var(--bad);}
+  .btn-ghost{background:transparent; color:var(--text-muted); font-weight:500; font-size:14.5px; padding:10px;}
+  .btn:disabled{opacity:.35;}
+  .btn+.btn{margin-top:10px;}
+
+  .role-card{border:1px solid var(--border); border-radius:16px; padding:22px; margin-bottom:14px;
+    display:flex; align-items:center; justify-content:space-between; cursor:pointer; background:var(--surface);}
+  .role-card:active{background:var(--surface-2);}
+  .role-card .t{font-size:17px; font-weight:700;}
+  .role-card .d{font-size:13px; color:var(--text-muted); margin-top:3px;}
+  .role-card .arrow{font-size:20px; color:var(--accent);}
+
+  .pin-dots{display:flex; gap:14px; justify-content:center; margin:30px 0;}
+  .pin-dot{width:16px; height:16px; border-radius:50%; border:2px solid var(--border);}
+  .pin-dot.filled{background:var(--accent); border-color:var(--accent);}
+  .keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:auto;}
+  .key{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px 0;
+    font-size:22px; font-weight:600; text-align:center; cursor:pointer; color:var(--text);}
+  .key:active{background:var(--surface-2);}
+  .key.empty{background:transparent; border:none;}
+  .key.back{font-size:16px; color:var(--text-muted);}
+  .pin-error{color:var(--bad); text-align:center; font-size:14px; min-height:20px; margin-top:-8px; margin-bottom:8px;}
+
+  .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:22px;}
+  .topbar .who{font-size:15px; font-weight:700;}
+  .topbar .role-tag{font-size:12px; color:var(--text-muted);}
+  .link{color:var(--text-muted); font-size:13.5px; cursor:pointer; text-decoration:underline;}
+
+  .clock-hero{text-align:center; padding:22px 0 10px;}
+  .clock-hero .time{font-size:52px; font-weight:800; letter-spacing:.01em; color:var(--accent);}
+  .clock-hero .date{font-size:14px; color:var(--text-muted); margin-top:4px;}
+  .status-pill{display:inline-block; margin:14px auto 0; padding:6px 14px; border-radius:20px; font-size:13px; font-weight:600;}
+  .status-working{background:rgba(79,143,109,.14); color:var(--good);}
+  .status-off{background:rgba(154,126,114,.14); color:var(--text-muted);}
+  .logo-mark{width:92px; height:92px; border-radius:50%; display:block; margin:0 auto 16px;
+    box-shadow:0 2px 10px rgba(123,29,52,.12);}
+  .logo-title{text-align:center; font-size:27px; font-weight:700; margin:0 0 4px;}
+  .logo-sub{text-align:center; color:var(--text-muted); font-size:12.5px; letter-spacing:.12em; margin-bottom:28px;}
+
+  .punch-btn{margin-top:24px; padding:22px; border-radius:18px; font-size:18px; font-weight:700;}
+  .punch-in{background:var(--good); color:#0E1512;}
+  .punch-out{background:var(--bad); color:#1A0C08;}
+
+  .ledger{border-top:1px solid var(--border); margin-top:28px;}
+  .ledger-title{font-size:13px; color:var(--text-muted); margin:22px 0 8px; display:flex; justify-content:space-between;}
+  .row{display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border);}
+  .row .l{font-size:14.5px;}
+  .row .l .sub{color:var(--text-muted); font-size:12.5px; display:block; margin-top:2px;}
+  .row .r{font-size:14.5px; font-weight:600;}
+  .row .r.good{color:var(--good);}
+  .row .r.bad{color:var(--bad);}
+
+  .summary-box{background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px; margin-top:18px;}
+  .summary-line{display:flex; justify-content:space-between; padding:7px 0; font-size:14.5px;}
+  .summary-line .k{color:var(--text-muted);}
+  .summary-line .v{font-weight:700;}
+  .summary-diff{margin-top:10px; padding-top:12px; border-top:1px solid var(--border); text-align:center;}
+  .summary-diff .big{font-size:26px; font-weight:800;}
+  .summary-diff .lbl{font-size:13px; color:var(--text-muted); margin-top:2px;}
+
+  input[type=text], input[type=number], input[type=datetime-local]{
+    width:100%; background:var(--surface); border:1px solid var(--border); color:var(--text);
+    padding:13px 14px; border-radius:12px; font-size:15px; font-family:inherit; margin-bottom:12px;}
+  label{font-size:13px; color:var(--text-muted); display:block; margin-bottom:6px;}
+
+  .emp-row{display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid var(--border); cursor:pointer;}
+  .emp-row:active{background:var(--surface-2);}
+  .emp-row .name{font-size:15px; font-weight:600;}
+  .emp-row .pin{font-size:12px; color:var(--text-muted); margin-top:2px;}
+  .emp-row .hrs{font-size:15px; font-weight:700; text-align:right;}
+  .emp-row .hrs .sub{display:block; font-size:11.5px; font-weight:500; color:var(--text-muted); text-align:right;}
+
+  .search{margin-bottom:6px;}
+  .fab{position:fixed; bottom:24px; right:calc(50% - 230px + 22px);
+    width:52px; height:52px; border-radius:50%; background:var(--accent); color:var(--accent-ink);
+    font-size:26px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:none;}
+  @media (max-width:500px){ .fab{right:22px;} }
+
+  .entry-edit-row{border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:10px;}
+  .entry-edit-row .meta{font-size:12px; color:var(--text-muted); margin-bottom:8px;}
+  .two-col{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .small-link{font-size:12.5px; color:var(--bad); cursor:pointer; text-decoration:underline; margin-top:4px; display:inline-block;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const STORAGE = window.storage;
+let EMPLOYEES = [];
+let ENTRIES = [];
+let SETTINGS = { targetHours: 100, adminPin: "9999" };
+let loaded = false;
+
+let state = {
+  screen: 'role',        // role | w_pin | w_home | a_pin | a_list | a_detail | a_add | a_settings
+  pinBuffer: '',
+  pinError: '',
+  currentEmployee: null,
+  adminAuthed: false,
+  detailEmployeeId: null,
+  addName: '', addPin: '',
+  search: ''
+};
+
+const SEED_NAMES = [
+"Ahrens, Maike","Ahrens, Chiara Janique","Barge, Vika","Barkemeyer, Birgit","Behrens, Siegrid",
+"Bodenstein, Jonah","Büsing, Tanja","Burfeind, Malte","Cetintürk, Ismail","Chrobok, Christina",
+"Dörgeloh, Rainer","Elsaka, Rabia","Flügge, Manuela","Glander, Thomas","Hoogevorst, Wilhelmus",
+"Husham, Ahmed","Al Hassawi, Mohammed","Kisman, Stella","Kops, Anke","Lange, Andreas",
+"Lenz, Maria","Lombardot, Laura","Meyer, Monika","Musij, Tanja","Myrus, Hans",
+"Neue, Michael","Quandt, Britta","Rugen, Charis","Schmidt, Tanja","Schröder, Frauke",
+"Schröder, Romy","Süsens, Heinrich","Teich, Marion","Tölle, Sylvia","Von Salzen, —",
+"Vuij, Harry","Wahle, Elke","Wittfoth, Susanne","Wohlers, Ramona"
+];
+
+function uid(prefix){ return prefix + '_' + Math.random().toString(36).slice(2,9); }
+
+async function loadAll(){
+  try{
+    const e = await STORAGE.get('tt_employees', true);
+    EMPLOYEES = e ? JSON.parse(e.value) : null;
+  }catch(err){ EMPLOYEES = null; }
+  try{
+    const en = await STORAGE.get('tt_entries', true);
+    ENTRIES = en ? JSON.parse(en.value) : [];
+  }catch(err){ ENTRIES = []; }
+  try{
+    const s = await STORAGE.get('tt_settings', true);
+    SETTINGS = s ? JSON.parse(s.value) : SETTINGS;
+  }catch(err){ /* keep default */ }
+
+  if(!EMPLOYEES){
+    EMPLOYEES = SEED_NAMES.map((n,i)=>({ id: 'e_'+(i+1), name:n, pin: String(1001+i) }));
+    await saveEmployees();
+    await saveSettings();
+  }
+  loaded = true;
+}
+async function saveEmployees(){ try{ await STORAGE.set('tt_employees', JSON.stringify(EMPLOYEES), true); }catch(e){} }
+async function saveEntries(){ try{ await STORAGE.set('tt_entries', JSON.stringify(ENTRIES), true); }catch(e){} }
+async function saveSettings(){ try{ await STORAGE.set('tt_settings', JSON.stringify(SETTINGS), true); }catch(e){} }
+
+function fmtTime(d){ return d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}); }
+function fmtDate(d){ return d.toLocaleDateString('de-DE',{weekday:'long', day:'numeric', month:'long'}); }
+function fmtHM(d){ return d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',hour12:false}); }
+function hhmm(d){ const p=n=>String(n).padStart(2,'0'); return p(d.getHours())+':'+p(d.getMinutes()); }
+function fmtDay(d){ return d.toLocaleDateString('de-DE',{day:'numeric', month:'short'}); }
+
+function openEntryFor(empId){
+  return ENTRIES.find(e=>e.employeeId===empId && !e.clockOut);
+}
+function breakTotalMs(entry, now){
+  if(!entry) return 0;
+  if(entry.pauseMinutesManual !== undefined && entry.pauseMinutesManual !== null){
+    return entry.pauseMinutesManual * 60000;
+  }
+  if(!entry.breaks) return 0;
+  let sum = 0;
+  entry.breaks.forEach(b=>{
+    const bs = new Date(b.start).getTime();
+    const be = b.end ? new Date(b.end).getTime() : now.getTime();
+    sum += Math.max(0, be - bs);
+  });
+  return sum;
+}
+function breakMinutes(entry, now=new Date()){
+  return Math.round(breakTotalMs(entry, now) / 60000);
+}
+function monthEntries(empId, ref=new Date()){
+  return ENTRIES.filter(e=>{
+    if(e.employeeId!==empId) return false;
+    const d = new Date(e.clockIn);
+    return d.getFullYear()===ref.getFullYear() && d.getMonth()===ref.getMonth();
+  }).sort((a,b)=> new Date(b.clockIn) - new Date(a.clockIn));
+}
+function entryHours(e, now=new Date()){
+  const start = new Date(e.clockIn);
+  const end = e.clockOut ? new Date(e.clockOut) : now;
+  const grossMs = Math.max(0, end - start);
+  const grossHours = grossMs / 3600000;
+  // Nach § 4 ArbZG wird die Pause erst ab 6 Stunden Arbeitszeit abgezogen.
+  if(grossHours < 6){
+    return grossHours;
+  }
+  const breakMs = breakTotalMs(e, now);
+  return Math.max(0, (grossMs - breakMs) / 3600000);
+}
+function effectiveTarget(emp){
+  return (emp.targetHours !== undefined && emp.targetHours !== null && emp.targetHours !== '')
+    ? Number(emp.targetHours) : SETTINGS.targetHours;
+}
+function monthlyTotal(empId, ref=new Date()){
+  return monthEntries(empId, ref).reduce((sum,e)=> sum + entryHours(e), 0);
+}
+function fmtHours(h){
+  const sign = h<0 ? '-' : '';
+  h = Math.abs(h);
+  const hh = Math.floor(h);
+  const mm = Math.round((h-hh)*60);
+  return `${sign}${hh} Std ${mm} Min`;
+}
+
+// ---------- render ----------
+function render(){
+  const app = document.getElementById('app');
+  if(!loaded){ app.innerHTML = `<div class="screen"><p class="sub">Wird geladen…</p></div>`; return; }
+  let html = '';
+  switch(state.screen){
+    case 'role': html = screenRole(); break;
+    case 'w_pin': html = screenWorkerPin(); break;
+    case 'w_home': html = screenWorkerHome(); break;
+    case 'a_pin': html = screenAdminPin(); break;
+    case 'a_list': html = screenAdminList(); break;
+    case 'a_detail': html = screenAdminDetail(); break;
+    case 'a_add': html = screenAdminAdd(); break;
+    case 'a_settings': html = screenAdminSettings(); break;
+  }
+  app.innerHTML = html;
+  bindEvents();
+}
+
+function screenRole(){
+  return `
+  <div class="screen">
+    <img class="logo-mark" src="icon.png" alt="Dirk Schröder">
+    <div class="logo-title">Dirk Schröder</div>
+    <div class="logo-sub">ARBEITSZEIT</div>
+    <p class="sub" style="text-align:center;">Zeiterfassung für Mitarbeiter oder Verwaltung durch den Admin.</p>
+    <div class="role-card" data-act="go-worker">
+      <div><div class="t">Mitarbeiter-Login</div><div class="d">Kommen / Gehen mit PIN erfassen</div></div>
+      <div class="arrow">›</div>
+    </div>
+    <div class="role-card" data-act="go-admin">
+      <div><div class="t">Admin-Login</div><div class="d">Alle Mitarbeiter einsehen und bearbeiten</div></div>
+      <div class="arrow">›</div>
+    </div>
+  </div>`;
+}
+
+function pinDots(){
+  let d='';
+  for(let i=0;i<4;i++) d += `<div class="pin-dot ${i<state.pinBuffer.length?'filled':''}"></div>`;
+  return d;
+}
+function keypadHtml(){
+  const keys = ['1','2','3','4','5','6','7','8','9','','0','back'];
+  return `<div class="keypad">` + keys.map(k=>{
+    if(k==='') return `<div class="key empty"></div>`;
+    if(k==='back') return `<div class="key back" data-act="key" data-key="back">Löschen</div>`;
+    return `<div class="key" data-act="key" data-key="${k}">${k}</div>`;
+  }).join('') + `</div>`;
+}
+
+function screenWorkerPin(){
+  return `
+  <div class="screen">
+    <div class="link" data-act="back-role">‹ Zurück</div>
+    <h2 style="margin-top:18px;">PIN eingeben</h2>
+    <p class="sub">4 Ziffern, nur für dich.</p>
+    ${pinDots()}
+    <div class="pin-error">${state.pinError}</div>
+    ${keypadHtml()}
+  </div>`;
+}
+
+function screenAdminPin(){
+  return `
+  <div class="screen">
+    <div class="link" data-act="back-role">‹ Zurück</div>
+    <h2 style="margin-top:18px;">Admin-Login</h2>
+    <p class="sub">Bitte den Admin-PIN eingeben.</p>
+    ${pinDots()}
+    <div class="pin-error">${state.pinError}</div>
+    ${keypadHtml()}
+  </div>`;
+}
+
+function screenWorkerHome(){
+  const emp = state.currentEmployee;
+  const open = openEntryFor(emp.id);
+  const now = new Date();
+  const total = monthlyTotal(emp.id, now);
+  const myTarget = effectiveTarget(emp);
+  const diff = total - myTarget;
+  const mEntries = monthEntries(emp.id, now).slice(0,10);
+
+  const statusClass = open ? 'status-working' : 'status-off';
+  const statusText = open ? 'Im Dienst — seit ' + fmtHM(new Date(open.clockIn)) + ' Uhr' : 'Aktuell nicht eingestempelt';
+
+  const actionHtml = `
+    <div style="margin-top:20px;">
+      <label>${open ? 'Uhrzeit (Gehen)' : 'Uhrzeit (Kommen)'}</label>
+      <input type="time" id="punchTimeInput" value="${hhmm(now)}">
+      <button class="btn punch-btn ${open?'punch-out':'punch-in'}" data-act="punch">
+        ${open ? 'Ausstempeln' : 'Einstempeln'}
+      </button>
+    </div>`;
+
+  let pauseWidget = '';
+  if(open){
+    const todaysPauses = (open.breaks || []).filter(b=>b.end);
+    const pauseListHtml = todaysPauses.length === 0 ? '' : `
+      <div style="margin-top:12px;">
+        ${todaysPauses.map(b=>{
+          const mins = Math.round((new Date(b.end) - new Date(b.start))/60000);
+          return `<div class="row" style="padding:8px 0;">
+            <div class="l">${fmtHM(new Date(b.start))} Uhr · ${mins} Min Pause</div>
+            <span class="small-link" data-act="remove-pause" data-id="${b.id}">Entfernen</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+    pauseWidget = `
+    <div class="summary-box" style="margin-top:14px;">
+      <div class="summary-line" style="padding-bottom:0;"><span class="k">Pause eintragen</span></div>
+      <div class="two-col" style="margin-top:10px;">
+        <button class="btn btn-outline" data-act="add-pause" data-min="15">15 Min</button>
+        <button class="btn btn-outline" data-act="add-pause" data-min="30">30 Min</button>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:10px; align-items:center;">
+        <input type="number" id="customPauseInput" placeholder="Andere Minuten" min="1" style="margin-bottom:0;">
+        <button class="btn btn-accent" style="width:auto; padding:12px 20px; white-space:nowrap;" data-act="add-pause-custom">Eintragen</button>
+      </div>
+      <p style="font-size:11.5px; color:var(--text-muted); margin:10px 0 0; line-height:1.5;">
+        Wird gesetzlich erst ab 6 Std. Arbeitszeit von der Zeit abgezogen (§ 4 ArbZG).
+      </p>
+      ${pauseListHtml}
+    </div>`;
+  }
+
+  return `
+  <div class="screen">
+    <div class="topbar">
+      <div><div class="who">${emp.name}</div><div class="role-tag">${now.toLocaleDateString('de-DE',{month:'long'})}</div></div>
+      <div class="link" data-act="logout">Abmelden</div>
+    </div>
+
+    <div class="clock-hero">
+      <div class="time" id="liveClock">${fmtTime(now)}</div>
+      <div class="date">${fmtDate(now)}</div>
+      <div class="status-pill ${statusClass}">${statusText}</div>
+    </div>
+
+    ${actionHtml}
+    ${pauseWidget}
+
+    <div class="summary-box">
+      <div class="summary-line"><span class="k">Stunden diesen Monat</span><span class="v">${fmtHours(total)}</span></div>
+      <div class="summary-line"><span class="k">Sollstunden</span><span class="v">${myTarget} Std</span></div>
+      <div class="summary-diff">
+        <div class="big" style="color:${diff>=0?'var(--good)':'var(--bad)'}">${fmtHours(Math.abs(diff))}</div>
+        <div class="lbl">${diff>=0 ? 'Überstunden' : 'Fehlstunden'}</div>
+      </div>
+    </div>
+
+    <div class="ledger-title"><span>Letzte Buchungen</span><span>${now.toLocaleDateString('de-DE',{month:'short'})}</span></div>
+    ${mEntries.length===0 ? `<p class="sub">Diesen Monat noch keine Buchungen.</p>` : mEntries.map(e=>{
+      const h = entryHours(e);
+      const brk = breakMinutes(e);
+      return `<div class="row">
+        <div class="l">${fmtDay(new Date(e.clockIn))}
+          <span class="sub">${fmtHM(new Date(e.clockIn))} → ${e.clockOut ? fmtHM(new Date(e.clockOut)) : 'läuft'}${brk>0? ' · Pause '+brk+' Min' : ''}</span>
+        </div>
+        <div class="r">${fmtHours(h)}</div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function screenAdminList(){
+  const now = new Date();
+  const q = state.search.trim().toLowerCase();
+  const list = EMPLOYEES.filter(e=> e.name.toLowerCase().includes(q))
+    .map(e=>{
+      const total = monthlyTotal(e.id, now);
+      const diff = total - effectiveTarget(e);
+      return {...e, total, diff};
+    })
+    .sort((a,b)=> a.name.localeCompare(b.name,'de'));
+
+  return `
+  <div class="screen">
+    <div class="topbar">
+      <div><div class="who">Admin-Übersicht</div><div class="role-tag">${EMPLOYEES.length} Mitarbeiter • ${now.toLocaleDateString('de-DE',{month:'long'})}</div></div>
+      <div class="link" data-act="logout">Abmelden</div>
+    </div>
+    <input type="text" class="search" placeholder="Name suchen…" value="${state.search}" data-bind="search">
+    <div class="two-col" style="margin-bottom:14px;">
+      <button class="btn btn-outline" data-act="go-add">+ Mitarbeiter hinzufügen</button>
+      <button class="btn btn-outline" data-act="go-settings">Einstellungen</button>
+    </div>
+    <div class="ledger-title"><span>Name</span><span>Stunden diesen Monat</span></div>
+    ${list.map(e=>`
+      <div class="emp-row" data-act="open-emp" data-id="${e.id}">
+        <div><div class="name">${e.name}</div><div class="pin">PIN: ${e.pin}</div></div>
+        <div class="hrs" style="color:${e.diff>=0?'var(--good)':'var(--bad)'}">
+          ${fmtHours(e.total)}
+          <span class="sub">${e.diff>=0?'+':''}${fmtHours(e.diff)}</span>
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
+
+function screenAdminDetail(){
+  const emp = EMPLOYEES.find(e=>e.id===state.detailEmployeeId);
+  const now = new Date();
+  const total = monthlyTotal(emp.id, now);
+  const myTarget = effectiveTarget(emp);
+  const isCustom = emp.targetHours !== undefined && emp.targetHours !== null && emp.targetHours !== '';
+  const diff = total - myTarget;
+  const entries = monthEntries(emp.id, now);
+
+  return `
+  <div class="screen">
+    <div class="link" data-act="back-list">‹ Alle Mitarbeiter</div>
+    <h2 style="margin-top:18px;">${emp.name}</h2>
+    <p class="sub">PIN: ${emp.pin} — ${now.toLocaleDateString('de-DE',{month:'long'})}</p>
+
+    <div class="summary-box">
+      <div class="summary-line"><span class="k">Stunden gesamt</span><span class="v">${fmtHours(total)}</span></div>
+      <div class="summary-line"><span class="k">Sollstunden</span><span class="v">${myTarget} Std${isCustom?' (individuell)':''}</span></div>
+      <div class="summary-diff">
+        <div class="big" style="color:${diff>=0?'var(--good)':'var(--bad)'}">${fmtHours(Math.abs(diff))}</div>
+        <div class="lbl">${diff>=0 ? 'Überstunden' : 'Fehlstunden'}</div>
+      </div>
+    </div>
+
+    <div class="summary-box" style="margin-top:14px;">
+      <div class="summary-line" style="padding-bottom:0;"><span class="k">Sollstunden für ${emp.name.split(',')[0]}</span></div>
+      <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+        <button class="key" style="flex:0 0 48px; padding:12px 0;" data-act="adj-target" data-delta="-5">−5</button>
+        <input type="number" id="empTargetInput" value="${myTarget}" style="margin-bottom:0; text-align:center; flex:1;">
+        <button class="key" style="flex:0 0 48px; padding:12px 0;" data-act="adj-target" data-delta="5">+5</button>
+      </div>
+      <div class="two-col" style="margin-top:10px;">
+        <button class="btn btn-outline" data-act="save-emp-target">Speichern</button>
+        <button class="btn btn-ghost" style="border:1px solid var(--border);" data-act="reset-emp-target">Standard (${SETTINGS.targetHours} Std) verwenden</button>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-top:16px;">
+      <button class="btn btn-outline" data-act="edit-name-pin">Name / PIN bearbeiten</button>
+      <button class="btn btn-outline" data-act="add-entry">+ Buchung manuell hinzufügen</button>
+    </div>
+
+    <div class="ledger-title" style="margin-top:24px;"><span>Buchungen diesen Monat</span><span>${entries.length}</span></div>
+    ${entries.length===0 ? `<p class="sub">Keine Buchungen vorhanden.</p>` : entries.map(e=>`
+      <div class="entry-edit-row">
+        <div class="meta">${fmtDay(new Date(e.clockIn))} • ${fmtHours(entryHours(e))}${breakMinutes(e)>0? ' · Pause '+breakMinutes(e)+' Min':''}</div>
+        <div class="two-col">
+          <div>
+            <label>Kommen</label>
+            <input type="datetime-local" data-entry-field="clockIn" data-entry-id="${e.id}" value="${toLocalInput(e.clockIn)}">
+          </div>
+          <div>
+            <label>Gehen</label>
+            <input type="datetime-local" data-entry-field="clockOut" data-entry-id="${e.id}" value="${e.clockOut? toLocalInput(e.clockOut):''}">
+          </div>
+        </div>
+        <label style="margin-top:2px;">Pause (Minuten)</label>
+        <input type="number" data-entry-field="pauseMinutesManual" data-entry-id="${e.id}" value="${breakMinutes(e)}" min="0">
+        <span class="small-link" data-act="del-entry" data-id="${e.id}">Diese Buchung löschen</span>
+      </div>`).join('')}
+  </div>`;
+}
+
+function toLocalInput(iso){
+  const d = new Date(iso);
+  const pad = n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function screenAdminAdd(){
+  return `
+  <div class="screen">
+    <div class="link" data-act="back-list">‹ Zurück</div>
+    <h2 style="margin-top:18px;">Neuen Mitarbeiter anlegen</h2>
+    <label>Vollständiger Name</label>
+    <input type="text" data-bind="addName" value="${state.addName}" placeholder="z. B. Max Mustermann">
+    <label>PIN (4 Ziffern)</label>
+    <input type="text" data-bind="addPin" value="${state.addPin}" placeholder="1234" maxlength="4">
+    <button class="btn btn-accent" data-act="save-add">Mitarbeiter speichern</button>
+  </div>`;
+}
+
+function screenAdminSettings(){
+  return `
+  <div class="screen">
+    <div class="link" data-act="back-list">‹ Zurück</div>
+    <h2 style="margin-top:18px;">Einstellungen</h2>
+    <label>Sollstunden pro Monat und Mitarbeiter</label>
+    <input type="number" id="targetInput" value="${SETTINGS.targetHours}">
+    <label>Admin-PIN</label>
+    <input type="text" id="adminPinInput" value="${SETTINGS.adminPin}" maxlength="6">
+    <button class="btn btn-accent" data-act="save-settings">Speichern</button>
+  </div>`;
+}
+
+// ---------- events ----------
+let clockTimer = null;
+function bindEvents(){
+  document.querySelectorAll('[data-act]').forEach(el=>{
+    el.addEventListener('click', onAction);
+  });
+  document.querySelectorAll('[data-bind]').forEach(el=>{
+    el.addEventListener('input', e=>{
+      state[el.getAttribute('data-bind')] = e.target.value;
+      if(el.getAttribute('data-bind')==='search'){ render(); }
+    });
+  });
+  document.querySelectorAll('[data-entry-field]').forEach(el=>{
+    el.addEventListener('change', onEntryFieldChange);
+  });
+
+  clearInterval(clockTimer);
+  if(state.screen==='w_home'){
+    clockTimer = setInterval(()=>{
+      const el = document.getElementById('liveClock');
+      if(el) el.textContent = fmtTime(new Date());
+    },1000);
+  }
+}
+
+async function onEntryFieldChange(e){
+  const id = e.target.getAttribute('data-entry-id');
+  const field = e.target.getAttribute('data-entry-field');
+  const entry = ENTRIES.find(x=>x.id===id);
+  if(!entry) return;
+  if(field==='pauseMinutesManual'){
+    const n = parseInt(e.target.value,10);
+    entry.pauseMinutesManual = (isNaN(n) || n<0) ? null : n;
+    await saveEntries();
+    render();
+    return;
+  }
+  if(!e.target.value){
+    if(field==='clockOut') entry.clockOut = null;
+    render(); return;
+  }
+  entry[field] = new Date(e.target.value).toISOString();
+  await saveEntries();
+  render();
+}
+
+async function onAction(e){
+  const act = e.currentTarget.getAttribute('data-act');
+  switch(act){
+    case 'go-worker': state.screen='w_pin'; state.pinBuffer=''; state.pinError=''; break;
+    case 'go-admin': state.screen='a_pin'; state.pinBuffer=''; state.pinError=''; break;
+    case 'back-role': state.screen='role'; break;
+    case 'logout':
+      state.currentEmployee=null; state.adminAuthed=false; state.screen='role'; break;
+    case 'key': break;
+    case 'punch': await doPunch(); break;
+    case 'add-pause': await addPause(parseInt(e.currentTarget.getAttribute('data-min'),10)); break;
+    case 'add-pause-custom': await addPauseCustom(); break;
+    case 'remove-pause': await removePause(e.currentTarget.getAttribute('data-id')); break;
+    case 'go-add': state.addName=''; state.addPin=''; state.screen='a_add'; break;
+    case 'go-settings': state.screen='a_settings'; break;
+    case 'save-add': await saveNewEmployee(); break;
+    case 'save-settings': await saveSettingsScreen(); break;
+    case 'open-emp': state.detailEmployeeId = e.currentTarget.getAttribute('data-id'); state.screen='a_detail'; break;
+    case 'back-list': state.screen='a_list'; break;
+    case 'edit-name-pin': await editNamePin(); break;
+    case 'add-entry': await addManualEntry(); break;
+    case 'del-entry': await delEntry(e.currentTarget.getAttribute('data-id')); break;
+    case 'adj-target': await adjustEmpTarget(parseInt(e.currentTarget.getAttribute('data-delta'),10)); break;
+    case 'save-emp-target': await saveEmpTargetManual(); break;
+    case 'reset-emp-target': await resetEmpTarget(); break;
+  }
+  if(e.currentTarget.hasAttribute('data-key')){
+    handleKey(e.currentTarget.getAttribute('data-key'));
+    return;
+  }
+  render();
+}
+
+function handleKey(k){
+  if(k==='back'){ state.pinBuffer = state.pinBuffer.slice(0,-1); state.pinError=''; render(); return; }
+  if(state.pinBuffer.length>=4) return;
+  state.pinBuffer += k;
+  render();
+  if(state.pinBuffer.length===4){
+    setTimeout(()=> submitPin(), 150);
+  }
+}
+
+function submitPin(){
+  if(state.screen==='w_pin'){
+    const emp = EMPLOYEES.find(x=>x.pin===state.pinBuffer);
+    if(emp){
+      state.currentEmployee = emp; state.screen='w_home'; state.pinBuffer=''; state.pinError='';
+    }else{
+      state.pinError='PIN ist falsch'; state.pinBuffer='';
+    }
+  }else if(state.screen==='a_pin'){
+    if(state.pinBuffer===SETTINGS.adminPin){
+      state.adminAuthed=true; state.screen='a_list'; state.pinBuffer=''; state.pinError='';
+    }else{
+      state.pinError='PIN ist falsch'; state.pinBuffer='';
+    }
+  }
+  render();
+}
+
+function selectedPunchTime(){
+  const input = document.getElementById('punchTimeInput');
+  const now = new Date();
+  if(!input || !input.value) return now;
+  const parts = input.value.split(':');
+  const hh = parseInt(parts[0],10), mm = parseInt(parts[1],10);
+  if(isNaN(hh) || isNaN(mm)) return now;
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm, 0, 0);
+}
+
+async function doPunch(){
+  const emp = state.currentEmployee;
+  const open = openEntryFor(emp.id);
+  const chosen = selectedPunchTime();
+  if(open){
+    open.clockOut = chosen.toISOString();
+  }else{
+    ENTRIES.push({ id: uid('en'), employeeId: emp.id, clockIn: chosen.toISOString(), clockOut: null, breaks: [] });
+  }
+  await saveEntries();
+}
+
+async function addPause(minutes){
+  if(!minutes || minutes <= 0) return;
+  const emp = state.currentEmployee;
+  const open = openEntryFor(emp.id);
+  if(!open) return;
+  if(!open.breaks) open.breaks = [];
+  const now = new Date();
+  const end = new Date(now.getTime() + minutes*60000);
+  open.breaks.push({ id: uid('br'), start: now.toISOString(), end: end.toISOString() });
+  await saveEntries();
+  render();
+}
+
+async function addPauseCustom(){
+  const input = document.getElementById('customPauseInput');
+  const n = parseInt(input.value, 10);
+  if(isNaN(n) || n <= 0){ alert('Bitte eine gültige Minutenzahl eingeben'); return; }
+  await addPause(n);
+}
+
+async function removePause(breakId){
+  const emp = state.currentEmployee;
+  const open = openEntryFor(emp.id);
+  if(!open || !open.breaks) return;
+  open.breaks = open.breaks.filter(b=>b.id!==breakId);
+  await saveEntries();
+  render();
+}
+
+async function saveNewEmployee(){
+  const name = state.addName.trim();
+  const pin = state.addPin.trim();
+  if(!name || pin.length!==4 || !/^\d{4}$/.test(pin)){
+    alert('Bitte Name und eine 4-stellige PIN eingeben');
+    return;
+  }
+  if(EMPLOYEES.some(e=>e.pin===pin)){
+    alert('Diese PIN wird bereits verwendet');
+    return;
+  }
+  EMPLOYEES.push({ id: uid('e'), name, pin });
+  await saveEmployees();
+  state.screen='a_list';
+}
+
+async function saveSettingsScreen(){
+  const t = parseInt(document.getElementById('targetInput').value,10);
+  const p = document.getElementById('adminPinInput').value.trim();
+  if(t>0) SETTINGS.targetHours = t;
+  if(p) SETTINGS.adminPin = p;
+  await saveSettings();
+  state.screen='a_list';
+}
+
+async function adjustEmpTarget(delta){
+  const emp = EMPLOYEES.find(e=>e.id===state.detailEmployeeId);
+  const current = effectiveTarget(emp);
+  emp.targetHours = Math.max(0, current + delta);
+  await saveEmployees();
+  render();
+}
+
+async function saveEmpTargetManual(){
+  const emp = EMPLOYEES.find(e=>e.id===state.detailEmployeeId);
+  const val = document.getElementById('empTargetInput').value.trim();
+  if(val === ''){
+    emp.targetHours = null;
+  }else{
+    const n = parseInt(val,10);
+    if(isNaN(n) || n < 0){ alert('Bitte eine gültige Zahl eingeben'); return; }
+    emp.targetHours = n;
+  }
+  await saveEmployees();
+  render();
+}
+
+async function resetEmpTarget(){
+  const emp = EMPLOYEES.find(e=>e.id===state.detailEmployeeId);
+  emp.targetHours = null;
+  await saveEmployees();
+  render();
+}
+
+async function editNamePin(){
+  const emp = EMPLOYEES.find(e=>e.id===state.detailEmployeeId);
+  const newName = prompt('Name:', emp.name);
+  if(newName===null) return;
+  const newPin = prompt('PIN (4 Ziffern):', emp.pin);
+  if(newPin===null) return;
+  if(!/^\d{4}$/.test(newPin)){ alert('Die PIN muss 4 Ziffern haben'); return; }
+  if(EMPLOYEES.some(e=>e.pin===newPin && e.id!==emp.id)){ alert('Diese PIN wird bereits verwendet'); return; }
+  emp.name = newName.trim() || emp.name;
+  emp.pin = newPin;
+  await saveEmployees();
+  render();
+}
+
+async function addManualEntry(){
+  const emp = EMPLOYEES.find(e=>e.id===state.detailEmployeeId);
+  const now = new Date();
+  ENTRIES.push({
+    id: uid('en'), employeeId: emp.id,
+    clockIn: new Date(now.getFullYear(),now.getMonth(),now.getDate(),8,0).toISOString(),
+    clockOut: new Date(now.getFullYear(),now.getMonth(),now.getDate(),16,0).toISOString(),
+    breaks: []
+  });
+  await saveEntries();
+  render();
+}
+
+async function delEntry(id){
+  if(!confirm('Diese Buchung löschen?')) return;
+  ENTRIES = ENTRIES.filter(e=>e.id!==id);
+  await saveEntries();
+  render();
+}
+
+(async function main(){
+  await loadAll();
+  render();
+})();
+</script>
+</body>
+</html>
