@@ -141,6 +141,51 @@ let EMPLOYEES = [];
 let ENTRIES = [];
 let SETTINGS = { targetHours: 100, adminPin: "9999" };
 let loaded = false;
+const PIN_LENGTH = 5;
+
+// One-time migration map: old 4-digit PIN -> new random 5-digit PIN.
+// Ensures existing employees keep a stable, predictable new PIN after the upgrade.
+const PIN_MIGRATION_MAP = {
+  "1001": "93810",
+  "1002": "24592",
+  "1003": "13278",
+  "1004": "46048",
+  "1005": "42098",
+  "1006": "39256",
+  "1007": "28289",
+  "1008": "23434",
+  "1009": "98696",
+  "1010": "81482",
+  "1011": "21395",
+  "1012": "87397",
+  "1013": "65302",
+  "1014": "14165",
+  "1015": "13905",
+  "1016": "22280",
+  "1017": "38657",
+  "1018": "40495",
+  "1019": "76237",
+  "1020": "88907",
+  "1021": "13478",
+  "1022": "83563",
+  "1023": "36062",
+  "1024": "95181",
+  "1025": "81426",
+  "1026": "64987",
+  "1027": "38893",
+  "1028": "68878",
+  "1029": "87236",
+  "1030": "46463",
+  "1031": "10851",
+  "1032": "30926",
+  "1033": "65392",
+  "1034": "54597",
+  "1035": "46421",
+  "1036": "30379",
+  "1037": "38221",
+  "1038": "54118",
+  "1039": "23396"
+};
 
 let state = {
   screen: 'role',        // role | w_pin | w_home | a_pin | a_list | a_detail | a_add | a_settings
@@ -166,6 +211,15 @@ const SEED_NAMES = [
 
 function uid(prefix){ return prefix + '_' + Math.random().toString(36).slice(2,9); }
 
+function genUniquePin(existingPins){
+  let p;
+  do{
+    p = String(Math.floor(10000 + Math.random()*90000));
+  }while(existingPins.has(p));
+  existingPins.add(p);
+  return p;
+}
+
 async function loadAll(){
   try{
     const e = await STORAGE.get('tt_employees', true);
@@ -181,10 +235,36 @@ async function loadAll(){
   }catch(err){ /* keep default */ }
 
   if(!EMPLOYEES){
-    EMPLOYEES = SEED_NAMES.map((n,i)=>({ id: 'e_'+(i+1), name:n, pin: String(1001+i) }));
+    const used = new Set();
+    EMPLOYEES = SEED_NAMES.map((n,i)=>({ id: 'e_'+(i+1), name:n, pin: genUniquePin(used) }));
     await saveEmployees();
     await saveSettings();
   }
+
+  // One-time migration: upgrade any short/legacy PINs to unique 5-digit PINs.
+  let changed = false;
+  const usedPins = new Set(EMPLOYEES.filter(e=>e.pin && e.pin.length===PIN_LENGTH).map(e=>e.pin));
+  EMPLOYEES.forEach(emp=>{
+    if(!emp.pin || emp.pin.length !== PIN_LENGTH){
+      const mapped = PIN_MIGRATION_MAP[emp.pin];
+      if(mapped && !usedPins.has(mapped)){
+        emp.pin = mapped;
+      }else{
+        emp.pin = genUniquePin(usedPins);
+      }
+      usedPins.add(emp.pin);
+      changed = true;
+    }
+  });
+  if(SETTINGS.adminPin && SETTINGS.adminPin.length !== PIN_LENGTH){
+    SETTINGS.adminPin = SETTINGS.adminPin.padStart(PIN_LENGTH, '0');
+    changed = true;
+  }
+  if(changed){
+    await saveEmployees();
+    await saveSettings();
+  }
+
   loaded = true;
 }
 async function saveEmployees(){ try{ await STORAGE.set('tt_employees', JSON.stringify(EMPLOYEES), true); }catch(e){} }
@@ -290,7 +370,7 @@ function screenRole(){
 
 function pinDots(){
   let d='';
-  for(let i=0;i<4;i++) d += `<div class="pin-dot ${i<state.pinBuffer.length?'filled':''}"></div>`;
+  for(let i=0;i<PIN_LENGTH;i++) d += `<div class="pin-dot ${i<state.pinBuffer.length?'filled':''}"></div>`;
   return d;
 }
 function keypadHtml(){
@@ -307,7 +387,7 @@ function screenWorkerPin(){
   <div class="screen">
     <div class="link" data-act="back-role">‹ Zurück</div>
     <h2 style="margin-top:18px;">PIN eingeben</h2>
-    <p class="sub">4 Ziffern, nur für dich.</p>
+    <p class="sub">5 Ziffern, nur für dich.</p>
     ${pinDots()}
     <div class="pin-error">${state.pinError}</div>
     ${keypadHtml()}
@@ -527,8 +607,8 @@ function screenAdminAdd(){
     <h2 style="margin-top:18px;">Neuen Mitarbeiter anlegen</h2>
     <label>Vollständiger Name</label>
     <input type="text" data-bind="addName" value="${state.addName}" placeholder="z. B. Max Mustermann">
-    <label>PIN (4 Ziffern)</label>
-    <input type="text" data-bind="addPin" value="${state.addPin}" placeholder="1234" maxlength="4">
+    <label>PIN (5 Ziffern)</label>
+    <input type="text" data-bind="addPin" value="${state.addPin}" placeholder="24681" maxlength="5">
     <button class="btn btn-accent" data-act="save-add">Mitarbeiter speichern</button>
   </div>`;
 }
@@ -540,8 +620,8 @@ function screenAdminSettings(){
     <h2 style="margin-top:18px;">Einstellungen</h2>
     <label>Sollstunden pro Monat und Mitarbeiter</label>
     <input type="number" id="targetInput" value="${SETTINGS.targetHours}">
-    <label>Admin-PIN</label>
-    <input type="text" id="adminPinInput" value="${SETTINGS.adminPin}" maxlength="6">
+    <label>Admin-PIN (5 Ziffern)</label>
+    <input type="text" id="adminPinInput" value="${SETTINGS.adminPin}" maxlength="5">
     <button class="btn btn-accent" data-act="save-settings">Speichern</button>
   </div>`;
 }
@@ -636,10 +716,10 @@ async function onAction(e){
 
 function handleKey(k){
   if(k==='back'){ state.pinBuffer = state.pinBuffer.slice(0,-1); state.pinError=''; render(); return; }
-  if(state.pinBuffer.length>=4) return;
+  if(state.pinBuffer.length>=PIN_LENGTH) return;
   state.pinBuffer += k;
   render();
-  if(state.pinBuffer.length===4){
+  if(state.pinBuffer.length===PIN_LENGTH){
     setTimeout(()=> submitPin(), 150);
   }
 }
@@ -716,8 +796,8 @@ async function removePause(breakId){
 async function saveNewEmployee(){
   const name = state.addName.trim();
   const pin = state.addPin.trim();
-  if(!name || pin.length!==4 || !/^\d{4}$/.test(pin)){
-    alert('Bitte Name und eine 4-stellige PIN eingeben');
+  if(!name || pin.length!==PIN_LENGTH || !/^\d{5}$/.test(pin)){
+    alert('Bitte Name und eine 5-stellige PIN eingeben');
     return;
   }
   if(EMPLOYEES.some(e=>e.pin===pin)){
@@ -733,7 +813,10 @@ async function saveSettingsScreen(){
   const t = parseInt(document.getElementById('targetInput').value,10);
   const p = document.getElementById('adminPinInput').value.trim();
   if(t>0) SETTINGS.targetHours = t;
-  if(p) SETTINGS.adminPin = p;
+  if(p){
+    if(!/^\d{5}$/.test(p)){ alert('Die Admin-PIN muss 5 Ziffern haben'); return; }
+    SETTINGS.adminPin = p;
+  }
   await saveSettings();
   state.screen='a_list';
 }
@@ -771,9 +854,9 @@ async function editNamePin(){
   const emp = EMPLOYEES.find(e=>e.id===state.detailEmployeeId);
   const newName = prompt('Name:', emp.name);
   if(newName===null) return;
-  const newPin = prompt('PIN (4 Ziffern):', emp.pin);
+  const newPin = prompt('PIN (5 Ziffern):', emp.pin);
   if(newPin===null) return;
-  if(!/^\d{4}$/.test(newPin)){ alert('Die PIN muss 4 Ziffern haben'); return; }
+  if(!/^\d{5}$/.test(newPin)){ alert('Die PIN muss 5 Ziffern haben'); return; }
   if(EMPLOYEES.some(e=>e.pin===newPin && e.id!==emp.id)){ alert('Diese PIN wird bereits verwendet'); return; }
   emp.name = newName.trim() || emp.name;
   emp.pin = newPin;
